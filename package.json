@@ -1,0 +1,44 @@
+{
+  "name": "write-npmstat",
+  "version": "0.1.0",
+  "description": "write-npmstat makes it easy to collect, filter and save npm statistics to csv files.",
+  "main": "writenpmstat.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "check-prettier": "prettier -c ./*js",
+    "prettier": "prettier -w ./*js",
+    "check-eslint": "eslint ./*js",
+    "eslint": "eslint --fix ./*js",
+    "format": "npm-run-all prettier eslint",
+    "check": "npm-run-all check-prettier check-eslint"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/veghdev/write-npmstat.git"
+  },
+  "keywords": [
+    "js",
+    "csv",
+    "npmstats"
+  ],
+  "author": "",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/veghdev/write-npmstat/issues"
+  },
+  "homepage": "https://github.com/veghdev/write-npmstat#readme",
+  "dependencies": {
+    "npm-stat-api": "^1.0.0",
+    "enum": "^3.0.0"
+  },
+  "devDependencies": {
+    "npm-run-all": "^4.1.0",
+    "prettier": "^2.6.0",
+    "eslint": "^8.14.0",
+    "eslint-config-standard": "^17.0.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-n": "^15.2.0",
+    "eslint-plugin-promise": "^6.0.0"
+  }
+}
