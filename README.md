@@ -13,10 +13,10 @@ npm install write-npmstat
 # Usage
 
 ```js
-const WriteNpmStat = require("write-npmstat");
+const WriteNpmStat = require("write-npmstat").default;
 
-packageName = "npm-stat-api"
-outDir = "stats/npm-stat-api"
+const packageName = "npm-stat-api";
+const outDir = "stats/npm-stat-api";
 const writenpmstat = new WriteNpmStat(packageName, outDir);
 
 writenpmstat.datePeriod = "month";
