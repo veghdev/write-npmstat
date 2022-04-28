@@ -1,5 +1,8 @@
+const fs = require("fs");
+
 const npm = require("npm-stat-api");
 const Enum = require("enum");
+const createCsvWriter = require("csv-writer").createArrayCsvWriter;
 
 const StatDate = require("./statdate.js");
 
@@ -11,15 +14,17 @@ const StatPeriod = new Enum(
 
 class WriteNpmStat {
     #packageName;
+    outDir;
 
     #datePeriod;
 
-    constructor(packageName) {
+    constructor(packageName, outDir) {
         if (!packageName) {
             throw new Error("packageName is a required argument");
         }
 
         this.#packageName = packageName;
+        this.outDir = outDir;
 
         this.#datePeriod = StatPeriod.year;
     }
@@ -79,7 +84,13 @@ class WriteNpmStat {
         return new Promise((resolve) => {
             const stats = this.getNpmStat(startDay, endDay);
             stats.then((stats) => {
-                this.#groupStats(stats, startDay, endDay, postfix);
+                const processedStats = this.#groupStats(
+                    stats,
+                    startDay,
+                    endDay,
+                    postfix
+                );
+                this.#writeStats(processedStats);
                 return resolve();
             });
         });
@@ -120,6 +131,26 @@ class WriteNpmStat {
             });
         }
         console.log(processedStats);
+        return processedStats;
+    }
+
+    #writeStats(stats) {
+        if (this.outDir) {
+            fs.mkdir(this.outDir, { recursive: true }, (err) => {
+                if (err) {
+                    throw err;
+                }
+                for (const [key, value] of Object.entries(stats)) {
+                    const csvWriter = createCsvWriter({
+                        path: this.outDir + "/" + key,
+                        header: ["date", "download"],
+                    });
+                    csvWriter.writeRecords(value).catch((err) => {
+                        throw err;
+                    });
+                }
+            });
+        }
     }
 }
 
