@@ -2,6 +2,7 @@ const fs = require("fs");
 
 const npm = require("npm-stat-api");
 const Enum = require("enum");
+const csv = require("csv-parser");
 const createCsvWriter = require("csv-writer").createArrayCsvWriter;
 
 const StatDate = require("./statdate.js");
@@ -17,6 +18,7 @@ class WriteNpmStat {
     outDir;
 
     #datePeriod;
+    #mergeStoredData;
 
     constructor(packageName, outDir) {
         if (!packageName) {
@@ -27,6 +29,7 @@ class WriteNpmStat {
         this.outDir = outDir;
 
         this.#datePeriod = StatPeriod.year;
+        this.#mergeStoredData = true;
     }
 
     get packageName() {
@@ -39,6 +42,14 @@ class WriteNpmStat {
 
     set datePeriod(datePeriod) {
         this.#datePeriod = StatPeriod.get(datePeriod);
+    }
+
+    get mergeStoredData() {
+        return this.#mergeStoredData;
+    }
+
+    set mergeStoredData(mergeStoredData) {
+        this.#mergeStoredData = Boolean(mergeStoredData);
     }
 
     getNpmStat(startDay, endDay) {
@@ -84,13 +95,15 @@ class WriteNpmStat {
         return new Promise((resolve) => {
             const stats = this.getNpmStat(startDay, endDay);
             stats.then((stats) => {
-                const processedStats = this.#groupStats(
+                const grouped = this.#groupStats(
                     stats,
                     startDay,
                     endDay,
                     postfix
                 );
-                this.#writeStats(processedStats);
+                this.#mergeStats(grouped).then((merged) => {
+                    this.#writeStats(merged);
+                });
                 return resolve();
             });
         });
@@ -99,7 +112,7 @@ class WriteNpmStat {
     #groupStats(stats, startDay, endDay, postfix) {
         const statDate = new StatDate(startDay, endDay);
         const days = WriteNpmStat.getDays(statDate.start, statDate.end);
-        const processedStats = {};
+        const grouped = {};
         if (this.datePeriod) {
             let substring;
             if (this.datePeriod === StatPeriod.year) {
@@ -114,36 +127,95 @@ class WriteNpmStat {
                 const prefix = day.substring(0, substring);
                 if (!initialized[prefix]) {
                     initialized[prefix] = true;
-                    processedStats[prefix + "_" + postfix + ".csv"] = [
+                    grouped[prefix + "_" + postfix + ".csv"] = [
                         [day, stats[day]],
                     ];
                 } else {
-                    processedStats[prefix + "_" + postfix + ".csv"].push([
+                    grouped[prefix + "_" + postfix + ".csv"].push([
                         day,
                         stats[day],
                     ]);
                 }
             });
         } else {
-            processedStats[postfix + ".csv"] = [];
+            grouped[postfix + ".csv"] = [];
             days.forEach((day) => {
-                processedStats[postfix + ".csv"].push([day, stats[day]]);
+                grouped[postfix + ".csv"].push([day, stats[day]]);
             });
         }
-        console.log(processedStats);
-        return processedStats;
+        return grouped;
+    }
+
+    #mergeStats(stats) {
+        return new Promise((resolve) => {
+            if (!this.mergeStoredData) {
+                return resolve(stats);
+            }
+            const csvFiles = {};
+            const csvFilesReady = [];
+            for (const [key, value] of Object.entries(stats)) {
+                const csvFileReady = this.#readCsv(key, value[0]);
+                csvFilesReady.push(csvFileReady);
+                csvFileReady.then((csvData) => {
+                    Object.assign(csvFiles, csvData);
+                });
+            }
+            Promise.all(csvFilesReady).then(() => {
+                for (const [key] of Object.entries(stats)) {
+                    console.log(csvFiles);
+                    console.log(key);
+                    if (csvFiles[key]) {
+                        stats[key] = csvFiles[key].concat(stats[key]);
+                    }
+                }
+                return resolve(stats);
+            });
+        });
+    }
+
+    #readCsv(csvFile, firstNewLine) {
+        return new Promise((resolve) => {
+            const csvData = {};
+            csvData[csvFile] = [];
+            if (!this.outDir) {
+                return resolve(csvData);
+            }
+            const csvFilePath = this.outDir + "/" + csvFile;
+            fs.stat(csvFilePath, function (err) {
+                if (err != null) {
+                    return resolve(csvData);
+                }
+                fs.createReadStream(csvFilePath)
+                    .pipe(csv())
+                    .on("data", (row) => {
+                        if (firstNewLine) {
+                            if (row.date < firstNewLine[0]) {
+                                csvData[csvFile].push([
+                                    row.date,
+                                    row.downloads,
+                                ]);
+                            }
+                        }
+                    })
+                    .on("end", () => {
+                        return resolve(csvData);
+                    });
+            });
+        });
     }
 
     #writeStats(stats) {
+        console.log(stats);
         if (this.outDir) {
             fs.mkdir(this.outDir, { recursive: true }, (err) => {
                 if (err) {
                     throw err;
                 }
                 for (const [key, value] of Object.entries(stats)) {
+                    const csvFilePath = this.outDir + "/" + key;
                     const csvWriter = createCsvWriter({
-                        path: this.outDir + "/" + key,
-                        header: ["date", "download"],
+                        path: csvFilePath,
+                        header: ["date", "downloads"],
                     });
                     csvWriter.writeRecords(value).catch((err) => {
                         throw err;
