@@ -25,7 +25,8 @@ jobs:
 
     - name: Publish package
       run: |
-        echo -e "registry=https://registry.npmjs.org/\nhttps://registry.npmjs.org/:_authToken=\${NODE_AUTH_TOKEN}" > .npmrc
+        npm config set registry=https://registry.npmjs.org/
+        npm config set //registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}
         npm publish
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_API_TOKEN }}
