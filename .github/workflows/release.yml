@@ -20,14 +20,17 @@ jobs:
     - name: Initialize development environment
       run: npm install
 
-    - name: Release package
-      run: npm run release
+    - name: Build package
+      run: npm run build
+
+    - name: Publish package
+      run: npm publish
       env:
-        NPM_TOKEN: ${{ secrets.NPM_API_TOKEN }}
+        NODE_AUTH_TOKEN: ${{ secrets.NPM_API_TOKEN }}
       if: ( github.event_name == 'release' && github.event.action == 'published' ) || github.event_name == 'workflow_dispatch'
 
     - name: Upload package
       run: |
-        gh auth login --with-token ${{ secrets.GITHUB_TOKEN }}
+        echo ${{ secrets.GITHUB_TOKEN }} | gh auth login --with-token
         gh release upload ${{ github.event.release.tag_name }} build/*tgz --clobber
       if: ( github.event_name == 'release' && github.event.action == 'published' ) || github.event_name == 'workflow_dispatch'
