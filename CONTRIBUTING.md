@@ -39,3 +39,32 @@ The `eslint` script runs `eslint` over the write-npmstat project.
 ```sh
 npm run eslint
 ```
+
+# Release
+
+write-npmstat is distributed on npmjs.
+
+## Version number
+
+If your changes are ready to release, you should increase the version number in
+`package.json`. The version bump should be in a separated commit.
+
+```sh
+git commit -m 'package.json: version x.y.z' package.json
+```
+
+Tag this commit:
+
+```sh
+git tag x.y.z
+```
+
+## Changes
+
+New release should be created on [github](https://github.com/veghdev/write-npmstat/releases/new).
+
+**Note:** Release notes are auto-generated from closed pull requests.
+
+## Package
+
+Publishing a new release will automatically trigger the [Release](https://github.com/veghdev/write-npmstat/blob/main/.github/workflows/release.yml) workflow which builds and uploads the write-npmstat package to [npmjs](https://www.npmjs.com/package/write-npmstat/).
