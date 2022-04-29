@@ -28,6 +28,8 @@ writenpmstat.datePeriod = "month";
 writenpmstat.writeNpmStat("2022-01", "2022-04-15");
 ```
 
+Visit our [documentation](https://veghdev.github.io/write-npmstat/) site for more details.
+
 # Contributing
 
 We welcome contributions to the project, visit our [contributing](https://github.com/veghdev/write-npmstat/blob/main/CONTRIBUTING.md) guide for further info.
