@@ -29,7 +29,7 @@ writenpmstat.writeNpmStat("2022-01", "2022-04-15");
 ```
 
 Visit our [documentation](https://veghdev.github.io/write-npmstat/) site for code reference or 
-our [wiki](https://veghdev.github.io/write-npmstat/) site for a step-by-step tutorial into write-npmstat.
+our [wiki](https://github.com/veghdev/write-npmstat/wiki/) site for a step-by-step tutorial into write-npmstat.
 
 # Contributing
 
