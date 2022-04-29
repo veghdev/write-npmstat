@@ -11,6 +11,7 @@
     "check-prettier": "prettier -c ./*js ./src/*js",
     "check-eslint": "eslint ./*js ./src/*js",
     "check": "npm-run-all check-prettier check-eslint",
+    "docs": "npx jsdoc -d docs --readme README.md ./src/*js",
     "rollup": "rollup -c",
     "pack": "mkdir -p build && npm pack --pack-destination build && tar -ztvf build/*.tgz"
   },
@@ -47,6 +48,7 @@
     "rollup": "^2.70.2",
     "@rollup/plugin-commonjs": "^22.0.0",
     "rollup-plugin-auto-external": "^2.0.0",
-    "rollup-plugin-terser": "^7.0.2"
+    "rollup-plugin-terser": "^7.0.2",
+    "jsdoc": "^3.6.10"
   }
 }
