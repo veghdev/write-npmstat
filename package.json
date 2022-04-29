@@ -11,7 +11,7 @@
     "check-prettier": "prettier -c ./*js ./src/*js",
     "check-eslint": "eslint ./*js ./src/*js",
     "check": "npm-run-all check-prettier check-eslint",
-    "docs": "npx jsdoc -d docs --readme README.md ./src/*js",
+    "docs": "npx jsdoc -d docs -r README.md ./src/*js",
     "rollup": "rollup -c",
     "pack": "mkdir -p build && npm pack --pack-destination build && tar -ztvf build/*.tgz"
   },
