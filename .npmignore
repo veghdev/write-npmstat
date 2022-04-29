@@ -1,8 +1,11 @@
+.gitignore
+.npmignore
+
 src
 
 .eslintrc.js
-.gitignore
-.npmignore
 .prettierrc
 rollup.config.js
 pull_request_template.md
+
+CODE_OF_CONDUCT.md
