@@ -3,6 +3,7 @@
   "version": "0.1.1",
   "description": "write-npmstat makes it easy to collect, filter and save npm statistics to csv files.",
   "main": "dist/index.min.js",
+  "files": [],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "prettier": "prettier -w ./*js ./src/*js",
@@ -10,7 +11,8 @@
     "check-prettier": "prettier -c ./*js ./src/*js",
     "check-eslint": "eslint ./*js ./src/*js",
     "check": "npm-run-all check-prettier check-eslint",
-    "rollup": "rollup -c"
+    "rollup": "rollup -c",
+    "pack": "mkdir -p build && npm pack --pack-destination build && tar -ztvf build/*.tgz"
   },
   "repository": {
     "type": "git",
