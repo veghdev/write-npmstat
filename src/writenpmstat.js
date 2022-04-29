@@ -7,12 +7,24 @@ const createCsvWriter = require("csv-writer").createArrayCsvWriter;
 
 const StatDate = require("./statdate.js");
 
+/**
+ * Enum for statistics grouping (year, month, day, null)
+ * @readonly
+ * @enum {string|null}
+ */
 const StatPeriod = new Enum(
     ["year", "month", "day", null],
     { ignoreCase: true },
     { freeze: true }
 );
 
+/**
+ * Class to collect, filter and save npm statistics to csv files
+ * @property {string|null} [outDir] - path of the directory where
+ *     the gathered data will be saved into csv files
+ * @property {StatPeriod} [datePeriod=year] - grouping of the statistics
+ * @property {boolean} [mergeStoredData=true] - flag used to merge actual npm statistics with previously stored
+ */
 class WriteNpmStat {
     #packageName;
     outDir;
@@ -20,6 +32,12 @@ class WriteNpmStat {
     #datePeriod;
     #mergeStoredData;
 
+    /**
+     * Initialize WriteNpmStat class
+     * @param {string} packageName - name of the target npm package
+     * @param {string|null} [outDir] - path of the directory where
+     *     the gathered data will be saved into csv files
+     */
     constructor(packageName, outDir) {
         if (!packageName) {
             throw new Error("packageName is a required argument");
@@ -52,8 +70,32 @@ class WriteNpmStat {
         this.#mergeStoredData = Boolean(mergeStoredData);
     }
 
-    getNpmStat(startDay, endDay) {
-        const statDate = new StatDate(startDay, endDay);
+    /**
+     * Returns npm statistics for a package
+     * @param {string|null} [startDate] - start date of the statistics
+     *    should be in one of the following formats:
+     *
+     *    <br>&nbsp;&nbsp; - "%Y", for example "2022", which means to be collected from "2022-01-01"
+     *
+     *    <br>&nbsp;&nbsp; - "%Y-%m", for example "2022-01", which means to be collected from "2022-01-01"
+     *
+     *    <br>&nbsp;&nbsp; - "%Y-%m-%d", for example "2022-01-01", which means to be collected from "2022-01-01"
+     *
+     *    <br>&nbsp;&nbsp; - undefined, which means to be collected from the last half year
+     * @param {string|null} [endDate] - end date of the statistics
+     *     should be in one of the following formats:
+     *
+     *     <br>&nbsp;&nbsp; - "%Y", for example "2022", which means to be collected until "2022-12-31"
+     *
+     *     <br>&nbsp;&nbsp; - "%Y-%m", for example "2022-12", which means to be collected until "2022-12-31"
+     *
+     *     <br>&nbsp;&nbsp; - "%Y-%m-%d", for example "2022-12-31", which means to be collected until "2022-12-31"
+     *
+     *     <br>&nbsp;&nbsp; - undefined, which means to be collected until the actual day
+     * @returns {Promise} Promise object represents the npm statistics for a package
+     */
+    getNpmStat(startDate, endDate) {
+        const statDate = new StatDate(startDate, endDate);
         const days = WriteNpmStat.getDays(statDate.start, statDate.end);
         return new Promise((resolve) => {
             const stats = [];
@@ -66,10 +108,10 @@ class WriteNpmStat {
         });
     }
 
-    static getDays(startDay, endDay) {
+    static getDays(startDate, endDate) {
         const arr = [];
-        const dt = new Date(startDay);
-        for (dt; dt <= new Date(endDay); dt.setDate(dt.getDate() + 1)) {
+        const dt = new Date(startDate);
+        for (dt; dt <= new Date(endDate); dt.setDate(dt.getDate() + 1)) {
             arr.push(StatDate.formatDate(new Date(dt)));
         }
         return arr;
@@ -91,26 +133,51 @@ class WriteNpmStat {
         });
     }
 
-    writeNpmStat(startDay, endDay, postfix = "npmstat") {
+    /**
+     * Writes npm statistics for a package
+     * @param {string|null} [startDate] - start date of the statistics
+     *     should be in one of the following formats:
+     *
+     *     <br>&nbsp;&nbsp; - "%Y", for example "2022", which means to be collected from "2022-01-01"
+     *
+     *     <br>&nbsp;&nbsp; - "%Y-%m", for example "2022-01", which means to be collected from "2022-01-01"
+     *
+     *     <br>&nbsp;&nbsp; - "%Y-%m-%d", for example "2022-01-01", which means to be collected from "2022-01-01"
+     *
+     *     <br>&nbsp;&nbsp; - undefined, which means to be collected from the last half year
+     * @param {string|null} [endDate] - end date of the statistics
+     *     should be in one of the following formats:
+     *
+     *     <br>&nbsp;&nbsp; - "%Y", for example "2022", which means to be collected until "2022-12-31"
+     *
+     *     <br>&nbsp;&nbsp; - "%Y-%m", for example "2022-12", which means to be collected until "2022-12-31"
+     *
+     *     <br>&nbsp;&nbsp; - "%Y-%m-%d", for example "2022-12-31", which means to be collected until "2022-12-31"
+     *
+     *     <br>&nbsp;&nbsp; - undefined, which means to be collected until the actual day
+     * @param {string|null} [endDate=npmstat] - csv file's postfix
+     * @returns {Promise} Promise object represents the npm statistics for a package
+     */
+    writeNpmStat(startDate, endDate, postfix = "npmstat") {
         return new Promise((resolve) => {
-            const stats = this.getNpmStat(startDay, endDay);
+            const stats = this.getNpmStat(startDate, endDate);
             stats.then((stats) => {
                 const grouped = this.#groupStats(
                     stats,
-                    startDay,
-                    endDay,
+                    startDate,
+                    endDate,
                     postfix
                 );
                 this.#mergeStats(grouped).then((merged) => {
                     this.#writeStats(merged);
+                    return resolve(merged);
                 });
-                return resolve();
             });
         });
     }
 
-    #groupStats(stats, startDay, endDay, postfix) {
-        const statDate = new StatDate(startDay, endDay);
+    #groupStats(stats, startDate, endDate, postfix) {
+        const statDate = new StatDate(startDate, endDate);
         const days = WriteNpmStat.getDays(statDate.start, statDate.end);
         const grouped = {};
         if (this.datePeriod) {
