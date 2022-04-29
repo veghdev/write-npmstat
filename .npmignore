@@ -1,6 +1,8 @@
 .gitignore
 .npmignore
 
+.github
+
 src
 
 .eslintrc.js

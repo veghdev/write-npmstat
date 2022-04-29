@@ -1,3 +1,6 @@
+[![CI](https://github.com/veghdev/write-npmstat/workflows/CI/badge.svg?branch=main)](https://github.com/veghdev/write-npmstat/actions/workflows/ci.yml)
+
+
 # About The Project
 
 write-npmstat makes it easy to collect, filter and save npm statistics to csv files.
