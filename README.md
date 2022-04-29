@@ -18,12 +18,14 @@ npm install write-npmstat
 ```js
 const WriteNpmStat = require("write-npmstat").default;
 
-const packageName = "npm-stat-api";
-const outDir = "stats/npm-stat-api";
-const writenpmstat = new WriteNpmStat(packageName, outDir);
+const targetPackage = "npm-stat-api";
+const csvDir = "stats/npm-stat-api";
+const writenpmstat = new WriteNpmStat(targetPackage, csvDir);
+
+writenpmstat.writeNpmStat("2021", "2022-03");
 
 writenpmstat.datePeriod = "month";
-writenpmstat.writeNpmStat("2022", "2022-03");
+writenpmstat.writeNpmStat("2022-01", "2022-04-15");
 ```
 
 # Contributing
