@@ -26,10 +26,10 @@ jobs:
     - name: Publish package
       run: |
         npm config set registry=https://registry.npmjs.org/
-        npm config set //registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}
+        npm config set //registry.npmjs.org/:_authToken=${NPM_API_TOKEN}
         npm publish
       env:
-        NODE_AUTH_TOKEN: ${{ secrets.NPM_API_TOKEN }}
+        NPM_API_TOKEN: ${{ secrets.NPM_API_TOKEN }}
       if: ( github.event_name == 'release' && github.event.action == 'published' ) || github.event_name == 'workflow_dispatch'
 
     - name: Upload package
