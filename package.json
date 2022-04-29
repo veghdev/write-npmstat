@@ -14,7 +14,7 @@
     "docs": "npx jsdoc -d docs -r README.md ./src/*js",
     "rollup": "rollup -c",
     "pack": "mkdir -p build && npm pack --pack-destination build && tar -ztvf build/*.tgz",
-    "release": "npm-run-all rollup pack && npm publish"
+    "build": "npm-run-all rollup pack"
   },
   "repository": {
     "type": "git",
