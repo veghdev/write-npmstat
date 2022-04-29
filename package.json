@@ -7,11 +7,9 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "prettier": "prettier -w ./*js ./src/*js",
     "eslint": "eslint --fix ./*js ./src/*js",
-    "format": "npm-run-all prettier eslint",
     "check-prettier": "prettier -c ./*js ./src/*js",
     "check-eslint": "eslint ./*js ./src/*js",
-    "check-format": "npm-run-all check-prettier check-eslint",
-    "check": "npm-run-all check-format",
+    "check": "npm-run-all check-prettier check-eslint",
     "rollup": "rollup -c"
   },
   "repository": {

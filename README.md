@@ -26,6 +26,10 @@ writenpmstat.datePeriod = "month";
 writenpmstat.writeNpmStat("2022", "2022-03");
 ```
 
+# Contributing
+
+We welcome contributions to the project, visit our [contributing](https://github.com/veghdev/write-npmstat/blob/main/CONTRIBUTING.md) guide for further info.
+
 # Contact
 
 Join our [discussions](https://github.com/veghdev/write-npmstat/discussions) page if you have any questions or comments.
