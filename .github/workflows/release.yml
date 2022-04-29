@@ -24,7 +24,9 @@ jobs:
       run: npm run build
 
     - name: Publish package
-      run: npm publish
+      run: |
+        echo -e "registry=https://registry.npmjs.org/\nhttps://registry.npmjs.org/:_authToken=\${NODE_AUTH_TOKEN}" > .npmrc
+        npm publish
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_API_TOKEN }}
       if: ( github.event_name == 'release' && github.event.action == 'published' ) || github.event_name == 'workflow_dispatch'
