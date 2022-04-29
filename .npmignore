@@ -5,3 +5,4 @@ src
 .npmignore
 .prettierrc
 rollup.config.js
+pull_request_template.md
