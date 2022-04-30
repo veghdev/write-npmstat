@@ -6,7 +6,7 @@ const path = require("path");
 
 export default [
     {
-        input: path.resolve(__dirname, "./src/writenpmstat.js"),
+        input: path.resolve(__dirname, "./src/npmstat.js"),
         output: {
             file: path.resolve(__dirname, "./dist/index.min.js"),
             format: "cjs",
