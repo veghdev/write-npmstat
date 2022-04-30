@@ -1,3 +1,4 @@
+[![npm version](https://badge.fury.io/js/write-npmstat.svg)](https://badge.fury.io/js/write-npmstat)
 [![CI](https://github.com/veghdev/write-npmstat/workflows/CI/badge.svg?branch=main)](https://github.com/veghdev/write-npmstat/actions/workflows/ci.yml)
 
 
