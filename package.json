@@ -1,6 +1,6 @@
 {
   "name": "write-npmstat",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "write-npmstat makes it easy to collect, filter and save npm statistics to csv files.",
   "main": "dist/index.min.js",
   "files": [],
