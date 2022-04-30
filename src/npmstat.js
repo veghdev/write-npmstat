@@ -23,6 +23,7 @@ const StatPeriod = new Enum(
  * @property {string|null} [outDir] - path of the directory where
  *     the gathered data will be saved into csv files
  * @property {StatPeriod} [datePeriod=year] - grouping of the statistics
+ * @property {boolean} [writePackageName=false] - flag used to write the name of the package into a csv column
  * @property {boolean} [mergeStoredData=true] - flag used to merge actual npm statistics with previously stored
  */
 class WriteNpmStat {
@@ -30,6 +31,7 @@ class WriteNpmStat {
     outDir;
 
     #datePeriod;
+    #writePackageName;
     #mergeStoredData;
 
     /**
@@ -47,6 +49,7 @@ class WriteNpmStat {
         this.outDir = outDir;
 
         this.#datePeriod = StatPeriod.year;
+        this.#writePackageName = false;
         this.#mergeStoredData = true;
     }
 
@@ -60,6 +63,14 @@ class WriteNpmStat {
 
     set datePeriod(datePeriod) {
         this.#datePeriod = StatPeriod.get(datePeriod);
+    }
+
+    get writePackageName() {
+        return this.#writePackageName;
+    }
+
+    set writePackageName(writePackageName) {
+        this.#writePackageName = Boolean(writePackageName);
     }
 
     get mergeStoredData() {
@@ -128,7 +139,14 @@ class WriteNpmStat {
                     }
                     throw new Error("retryLimit reached");
                 }
-                return resolve([res.start, res.downloads]);
+                const statKey = res.start;
+                const statValues = [];
+                statValues.push(res.start);
+                if (this.writePackageName) {
+                    statValues.push(this.#packageName);
+                }
+                statValues.push(res.downloads);
+                return resolve([statKey, statValues]);
             });
         });
     }
@@ -155,7 +173,7 @@ class WriteNpmStat {
      *     <br>&nbsp;&nbsp; - "%Y-%m-%d", for example "2022-12-31", which means to be collected until "2022-12-31"
      *
      *     <br>&nbsp;&nbsp; - undefined, which means to be collected until the actual day
-     * @param {string|null} [endDate=npmstat] - csv file's postfix
+     * @param {string|null} [endDate=npmstat] - postfix of the csv file
      * @returns {Promise} Promise object represents the npm statistics for a package
      */
     writeNpmStat(startDate, endDate, postfix = "npmstat") {
@@ -246,6 +264,7 @@ class WriteNpmStat {
                 return resolve(csvData);
             }
             const csvFilePath = this.outDir + "/" + csvFile;
+            const writePackageName = this.writePackageName;
             fs.stat(csvFilePath, function (err) {
                 if (err != null) {
                     return resolve(csvData);
@@ -255,10 +274,14 @@ class WriteNpmStat {
                     .on("data", (row) => {
                         if (firstNewLine) {
                             if (row.date < firstNewLine[0]) {
-                                csvData[csvFile].push([
-                                    row.date,
-                                    row.downloads,
-                                ]);
+                                const statKey = row.date;
+                                const statValues = [];
+                                statValues.push(row.date);
+                                if (writePackageName) {
+                                    statValues.push(row.package);
+                                }
+                                statValues.push(row.downloads);
+                                csvData[csvFile].push([statKey, statValues]);
                             }
                         }
                     })
@@ -270,7 +293,6 @@ class WriteNpmStat {
     }
 
     #writeStats(stats) {
-        console.log(stats);
         if (this.outDir) {
             fs.mkdir(this.outDir, { recursive: true }, (err) => {
                 if (err) {
@@ -280,9 +302,15 @@ class WriteNpmStat {
                     const csvFilePath = this.outDir + "/" + key;
                     const csvWriter = createCsvWriter({
                         path: csvFilePath,
-                        header: ["date", "downloads"],
+                        header: this.writePackageName
+                            ? ["date", "package", "downloads"]
+                            : ["date", "downloads"],
                     });
-                    csvWriter.writeRecords(value).catch((err) => {
+                    const postProcessedStats = [];
+                    value.forEach((stat) => {
+                        postProcessedStats.push(stat[1]);
+                    });
+                    csvWriter.writeRecords(postProcessedStats).catch((err) => {
                         throw err;
                     });
                 }
