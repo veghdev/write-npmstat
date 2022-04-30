@@ -229,8 +229,6 @@ class WriteNpmStat {
             }
             Promise.all(csvFilesReady).then(() => {
                 for (const [key] of Object.entries(stats)) {
-                    console.log(csvFiles);
-                    console.log(key);
                     if (csvFiles[key]) {
                         stats[key] = csvFiles[key].concat(stats[key]);
                     }

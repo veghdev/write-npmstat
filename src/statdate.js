@@ -5,7 +5,7 @@ class StatDate {
     constructor(start, end) {
         this.#start = StatDate.formatStart(start);
         this.#end = StatDate.formatEnd(end);
-        if (this.#start >= this.#end) {
+        if (this.#start > this.#end) {
             throw new Error("start must be before end");
         }
     }
@@ -17,7 +17,7 @@ class StatDate {
     set start(start) {
         start = StatDate.formatStart(start);
         if (this.end && start) {
-            if (start <= this.end) {
+            if (start > this.end) {
                 throw new Error("start must be before end");
             }
         }
@@ -31,7 +31,7 @@ class StatDate {
     set end(end) {
         end = StatDate.formatEnd(end);
         if (this.start && end) {
-            if (this.start <= end) {
+            if (this.start > end) {
                 throw new Error("start must be before end");
             }
         }
