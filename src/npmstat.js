@@ -4,6 +4,7 @@ const npm = require("npm-stat-api");
 const Enum = require("enum");
 const csv = require("csv-parser");
 const createCsvWriter = require("csv-writer").createArrayCsvWriter;
+const fetch = require("node-fetch");
 
 const StatDate = require("./statdate.js");
 
@@ -119,6 +120,16 @@ class WriteNpmStat {
         });
     }
 
+    /**
+     * Returns last week npm statistics for a package
+     * @returns {Promise} Promise object represents the last week npm statistics for a package
+     */
+    getLastWeekNpmStat() {
+        return new Promise((resolve) => {
+            return resolve(this.#getLastWeekStat(100));
+        });
+    }
+
     static getDays(startDate, endDate) {
         const arr = [];
         const dt = new Date(startDate);
@@ -151,6 +162,45 @@ class WriteNpmStat {
         });
     }
 
+    #getLastWeekStat(retryLimit, retryCount) {
+        retryLimit = retryLimit || Number.MAX_VALUE;
+        retryCount = Math.max(retryCount || 0, 0);
+        return fetch(
+            "https://api.npmjs.org/versions/" + this.#packageName + "/last-week"
+        )
+            .then((response) => {
+                if (response.status !== 200) {
+                    throw new Error("response.status: " + response.status);
+                }
+                return new Promise((resolve) => {
+                    response.json().then((response) => {
+                        const responseObject = {};
+                        const day = StatDate.formatStart(new Date());
+                        for (const [key, value] of Object.entries(
+                            response.downloads
+                        )) {
+                            const statKey = day + "_" + key;
+                            const statValues = [];
+                            statValues.push(day);
+                            if (this.writePackageName) {
+                                statValues.push(this.#packageName);
+                            }
+                            statValues.push(key);
+                            statValues.push(value);
+                            responseObject[statKey] = statValues;
+                        }
+                        return resolve(responseObject);
+                    });
+                });
+            })
+            .catch((err) => {
+                if (retryCount < retryLimit) {
+                    return this.#getLastWeekStat(retryLimit, retryCount + 1);
+                }
+                throw err;
+            });
+    }
+
     /**
      * Writes npm statistics for a package
      * @param {string|null} [startDate] - start date of the statistics
@@ -173,28 +223,56 @@ class WriteNpmStat {
      *     <br>&nbsp;&nbsp; - "%Y-%m-%d", for example "2022-12-31", which means to be collected until "2022-12-31"
      *
      *     <br>&nbsp;&nbsp; - undefined, which means to be collected until the actual day
-     * @param {string|null} [endDate=npmstat] - postfix of the csv file
+     * @param {string|null} [postfix=npmstat] - postfix of the csv file
      * @returns {Promise} Promise object represents the npm statistics for a package
      */
     writeNpmStat(startDate, endDate, postfix = "npmstat") {
         return new Promise((resolve) => {
+            const lastWeek = false;
             const stats = this.getNpmStat(startDate, endDate);
             stats.then((stats) => {
                 const grouped = this.#groupStats(
+                    lastWeek,
                     stats,
                     startDate,
                     endDate,
                     postfix
                 );
-                this.#mergeStats(grouped).then((merged) => {
-                    this.#writeStats(merged);
+                this.#mergeStats(lastWeek, grouped).then((merged) => {
+                    this.#writeStats(lastWeek, merged);
                     return resolve(merged);
                 });
             });
         });
     }
 
-    #groupStats(stats, startDate, endDate, postfix) {
+    /**
+     * Writes last week npm statistics for a package
+     * @param {string|null} [postfix=lastweek_npmstat] - postfix of the csv file
+     * @returns {Promise} Promise object represents the last week npm statistics for a package
+     */
+    writeLastWeekNpmStat(postfix = "lastweek_npmstat") {
+        return new Promise((resolve) => {
+            const lastWeek = true;
+            const stats = this.getLastWeekNpmStat();
+            stats.then((stats) => {
+                const day = StatDate.formatStart(new Date());
+                const grouped = this.#groupStats(
+                    lastWeek,
+                    stats,
+                    day,
+                    day,
+                    postfix
+                );
+                this.#mergeStats(lastWeek, grouped).then((merged) => {
+                    this.#writeStats(lastWeek, merged);
+                    return resolve(merged);
+                });
+            });
+        });
+    }
+
+    #groupStats(lastWeek, stats, startDate, endDate, postfix) {
         const statDate = new StatDate(startDate, endDate);
         const days = WriteNpmStat.getDays(statDate.start, statDate.end);
         const grouped = {};
@@ -212,9 +290,17 @@ class WriteNpmStat {
                 const prefix = day.substring(0, substring);
                 if (!initialized[prefix]) {
                     initialized[prefix] = true;
-                    grouped[prefix + "_" + postfix + ".csv"] = [
-                        [day, stats[day]],
-                    ];
+                    grouped[prefix + "_" + postfix + ".csv"] = [];
+                }
+                if (lastWeek) {
+                    for (const [key, value] of Object.entries(stats)) {
+                        if (key.startsWith(day)) {
+                            grouped[prefix + "_" + postfix + ".csv"].push([
+                                key,
+                                value,
+                            ]);
+                        }
+                    }
                 } else {
                     grouped[prefix + "_" + postfix + ".csv"].push([
                         day,
@@ -225,13 +311,21 @@ class WriteNpmStat {
         } else {
             grouped[postfix + ".csv"] = [];
             days.forEach((day) => {
-                grouped[postfix + ".csv"].push([day, stats[day]]);
+                if (lastWeek) {
+                    for (const [key, value] of Object.entries(stats)) {
+                        if (key.startsWith(day)) {
+                            grouped[postfix + ".csv"].push([key, value]);
+                        }
+                    }
+                } else {
+                    grouped[postfix + ".csv"].push([day, stats[day]]);
+                }
             });
         }
         return grouped;
     }
 
-    #mergeStats(stats) {
+    #mergeStats(lastWeek, stats) {
         return new Promise((resolve) => {
             if (!this.mergeStoredData) {
                 return resolve(stats);
@@ -239,7 +333,7 @@ class WriteNpmStat {
             const csvFiles = {};
             const csvFilesReady = [];
             for (const [key, value] of Object.entries(stats)) {
-                const csvFileReady = this.#readCsv(key, value[0]);
+                const csvFileReady = this.#readCsv(lastWeek, key, value[0]);
                 csvFilesReady.push(csvFileReady);
                 csvFileReady.then((csvData) => {
                     Object.assign(csvFiles, csvData);
@@ -256,7 +350,7 @@ class WriteNpmStat {
         });
     }
 
-    #readCsv(csvFile, firstNewLine) {
+    #readCsv(lastWeek, csvFile, firstNewLine) {
         return new Promise((resolve) => {
             const csvData = {};
             csvData[csvFile] = [];
@@ -273,12 +367,15 @@ class WriteNpmStat {
                     .pipe(csv())
                     .on("data", (row) => {
                         if (firstNewLine) {
-                            if (row.date < firstNewLine[0]) {
+                            if (row.date < firstNewLine[0].substring(0, 10)) {
                                 const statKey = row.date;
                                 const statValues = [];
                                 statValues.push(row.date);
                                 if (writePackageName) {
                                     statValues.push(row.package);
+                                }
+                                if (lastWeek) {
+                                    statValues.push(row.version);
                                 }
                                 statValues.push(row.downloads);
                                 csvData[csvFile].push([statKey, statValues]);
@@ -292,7 +389,7 @@ class WriteNpmStat {
         });
     }
 
-    #writeStats(stats) {
+    #writeStats(lastWeek, stats) {
         if (this.outDir) {
             fs.mkdir(this.outDir, { recursive: true }, (err) => {
                 if (err) {
@@ -300,11 +397,17 @@ class WriteNpmStat {
                 }
                 for (const [key, value] of Object.entries(stats)) {
                     const csvFilePath = this.outDir + "/" + key;
+                    const header = ["date"];
+                    if (this.writePackageName) {
+                        header.push("package");
+                    }
+                    if (lastWeek) {
+                        header.push("version");
+                    }
+                    header.push("downloads");
                     const csvWriter = createCsvWriter({
                         path: csvFilePath,
-                        header: this.writePackageName
-                            ? ["date", "package", "downloads"]
-                            : ["date", "downloads"],
+                        header,
                     });
                     const postProcessedStats = [];
                     value.forEach((stat) => {

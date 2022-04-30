@@ -8,7 +8,7 @@ write-npmstat makes it easy to collect, filter and save npm statistics to csv fi
 
 # Installation
 
-write-npmstat requires `npm-stat-api`, `enum`, `csv-writer` and `csv-parser` packages.
+write-npmstat requires `npm-stat-api`, `enum`, `csv-writer`, `csv-parser` and `node-fetch` packages.
 
 ```sh
 npm install write-npmstat
@@ -27,6 +27,8 @@ writenpmstat.writeNpmStat("2021", "2022-03");
 
 writenpmstat.datePeriod = "month";
 writenpmstat.writeNpmStat("2022-01", "2022-04-15");
+
+writenpmstat.writeLastWeekNpmStat();
 ```
 
 Visit our [documentation](https://veghdev.github.io/write-npmstat/) site for code reference or 
