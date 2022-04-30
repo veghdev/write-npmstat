@@ -27,6 +27,8 @@ writenpmstat.writeNpmStat("2021", "2022-03");
 
 writenpmstat.datePeriod = "month";
 writenpmstat.writeNpmStat("2022-01", "2022-04-15");
+
+writenpmstat.writeLastWeekNpmStat();
 ```
 
 Visit our [documentation](https://veghdev.github.io/write-npmstat/) site for code reference or 
