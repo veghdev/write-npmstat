@@ -4,6 +4,7 @@ const npm = require("npm-stat-api");
 const Enum = require("enum");
 const csv = require("csv-parser");
 const createCsvWriter = require("csv-writer").createArrayCsvWriter;
+const fetch = require("node-fetch");
 
 const StatDate = require("./statdate.js");
 
@@ -119,6 +120,16 @@ class WriteNpmStat {
         });
     }
 
+    /**
+     * Returns last week npm statistics for a package
+     * @returns {Promise} Promise object represents the last week npm statistics for a package
+     */
+    getLastWeekNpmStat() {
+        return new Promise((resolve) => {
+            return resolve(this.#getLastWeekStat(100))
+        });
+    }
+
     static getDays(startDate, endDate) {
         const arr = [];
         const dt = new Date(startDate);
@@ -148,6 +159,39 @@ class WriteNpmStat {
                 statValues.push(res.downloads);
                 return resolve([statKey, statValues]);
             });
+        });
+    }
+
+    #getLastWeekStat (retryLimit, retryCount) {
+        retryLimit = retryLimit || Number.MAX_VALUE;
+        retryCount = Math.max(retryCount || 0, 0);
+        return fetch("https://api.npmjs.org/versions/" + this.#packageName + "/last-week").then(response => {
+            if (response.status !== 200) {
+                throw new Error("response.status: " + response.status);
+            }
+            return new Promise((resolve) => {
+                response.json().then(response => {
+                    const responseObject = {};
+                    const day = StatDate.formatStart(new Date())
+                    for (const [key, value] of Object.entries(response.downloads)) {
+                        const statKey = day + "_" + key;
+                        const statValues = [];
+                        statValues.push(day);
+                        if (this.writePackageName) {
+                            statValues.push(this.#packageName);
+                        }
+                        statValues.push(key);
+                        statValues.push(value);
+                        responseObject[statKey] = statValues;
+                    }
+                    return resolve(responseObject);
+                });
+            });
+        }).catch(err => {
+            if (retryCount < retryLimit) {
+                return getLastWeekStat(retryLimit, retryCount + 1);
+            }
+            throw err;
         });
     }
 

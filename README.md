@@ -8,7 +8,7 @@ write-npmstat makes it easy to collect, filter and save npm statistics to csv fi
 
 # Installation
 
-write-npmstat requires `npm-stat-api`, `enum`, `csv-writer` and `csv-parser` packages.
+write-npmstat requires `npm-stat-api`, `enum`, `csv-writer`, `csv-parser` and `node-fetch` packages.
 
 ```sh
 npm install write-npmstat
