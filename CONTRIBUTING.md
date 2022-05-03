@@ -44,22 +44,14 @@ npm run eslint
 
 write-npmstat is distributed on npmjs.
 
-## Version number
-
-If your changes are ready to release, you should increase the version number in
-`package.json`. The version bump should be in a separated commit.
-
-```sh
-git commit -m 'package.json: version x.y.z' package.json
-```
-
-Tag this commit:
-
-```sh
-git tag x.y.z
-```
-
 ## Changes
+
+If your changes are ready to release, you should increase the version number in `package.json`. The version bump should be in a separated commit 
+and the commit message should be in the following format:
+
+```
+'package.json: version x.y.z'
+```
 
 New release should be created on [github](https://github.com/veghdev/write-npmstat/releases/new).
 
