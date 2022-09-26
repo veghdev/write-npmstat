@@ -257,6 +257,17 @@ class WriteNpmStat {
             const stats = this.getLastWeekNpmStat();
             stats.then((stats) => {
                 const day = StatDate.formatStart(new Date());
+                if (Object.keys(stats).length === 0) {
+                    const statKey = day.concat("_", "-");
+                    const statValue = [];
+                    statValue.push(day);
+                    if (this.#writePackageName) {
+                        statValue.push(this.#packageName);
+                    }
+                    statValue.push("-");
+                    statValue.push(0);
+                    stats[statKey] = statValue;
+                }
                 const grouped = this.#groupStats(
                     lastWeek,
                     stats,
